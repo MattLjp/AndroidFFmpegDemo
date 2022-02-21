@@ -10,7 +10,7 @@ import android.view.Surface
  */
 object MediaPlayer {
     init {
-        System.loadLibrary("android-ffmpeg")
+        System.loadLibrary("native-lib")
     }
 
     external fun ffmpegInfo(): String
