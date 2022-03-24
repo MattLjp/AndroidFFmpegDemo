@@ -28,21 +28,21 @@ class SimpleRender: GLSurfaceView.Renderer {
 
         val textureIds = OpenGLTools.createTextureIds(drawers.size)
         for ((idx, drawer) in drawers.withIndex()) {
-            drawer.setTextureID(textureIds[idx])
+            drawer.surfaceCreated(textureIds[idx])
         }
     }
 
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         GLES20.glViewport(0, 0, width, height)
         for (drawer in drawers) {
-            drawer.setWorldSize(width, height)
+            drawer.surfaceChanged(width, height)
         }
     }
 
     override fun onDrawFrame(gl: GL10?) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
         drawers.forEach {
-            it.draw()
+            it.drawFrame()
         }
     }
 

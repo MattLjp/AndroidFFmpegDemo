@@ -20,12 +20,12 @@ import java.nio.ByteBuffer
  * @Datetime 2019-09-03 10:52
  *
  */
-class VideoDecoder(path: String, sfv: SurfaceView?, surface: Surface?): BaseDecoder(path) {
+class VideoDecoder(path: String, sfv: SurfaceView?, surface: Surface?) : BaseDecoder(path) {
     private val TAG = "VideoDecoder"
-    
+
     private val mSurfaceView = sfv
     private var mSurface = surface
-    
+
     override fun check(): Boolean {
         if (mSurfaceView == null && mSurface == null) {
             Log.w(TAG, "SurfaceView和Surface都为空，至少需要一个不为空")
@@ -40,11 +40,12 @@ class VideoDecoder(path: String, sfv: SurfaceView?, surface: Surface?): BaseDeco
     }
 
     override fun initSpecParams(format: MediaFormat) {
+
     }
 
     override fun configCodec(codec: MediaCodec, format: MediaFormat): Boolean {
         if (mSurface != null) {
-            codec.configure(format, mSurface , null, 0)
+            codec.configure(format, mSurface, null, 0)
             notifyDecode()
         } else if (mSurfaceView?.holder?.surface != null) {
             mSurface = mSurfaceView?.holder?.surface
@@ -54,7 +55,12 @@ class VideoDecoder(path: String, sfv: SurfaceView?, surface: Surface?): BaseDeco
                 override fun surfaceRedrawNeeded(holder: SurfaceHolder) {
                 }
 
-                override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+                override fun surfaceChanged(
+                    holder: SurfaceHolder,
+                    format: Int,
+                    width: Int,
+                    height: Int
+                ) {
                 }
 
                 override fun surfaceDestroyed(holder: SurfaceHolder) {
@@ -75,8 +81,10 @@ class VideoDecoder(path: String, sfv: SurfaceView?, surface: Surface?): BaseDeco
         return true
     }
 
-    override fun render(outputBuffer: ByteBuffer,
-                        bufferInfo: MediaCodec.BufferInfo) {
+    override fun render(
+        outputBuffer: ByteBuffer,
+        bufferInfo: MediaCodec.BufferInfo
+    ) {
     }
 
     override fun doneDecode() {

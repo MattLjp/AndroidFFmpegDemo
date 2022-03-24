@@ -53,12 +53,16 @@ class VideoDrawer : IDrawer {
 
     //矩阵变换接收者
     private var mVertexMatrixHandler: Int = -1
+
     // 顶点坐标接收者
     private var mVertexPosHandler: Int = -1
+
     // 纹理坐标接收者
     private var mTexturePosHandler: Int = -1
+
     // 纹理接收者
     private var mTextureHandler: Int = -1
+
     // 半透值接收者
     private var mAlphaHandler: Int = -1
 
@@ -70,11 +74,7 @@ class VideoDrawer : IDrawer {
     private var mAlpha = 1f
 
     init {
-        //【步骤1: 初始化顶点坐标】
-        initPos()
-    }
-
-    private fun initPos() {
+        //初始化顶点坐标
         val bb = ByteBuffer.allocateDirect(mVertexCoors.size * 4)
         bb.order(ByteOrder.nativeOrder())
         //将坐标数据转换为FloatBuffer，用以传入给OpenGL ES程序
@@ -89,12 +89,45 @@ class VideoDrawer : IDrawer {
         mTextureBuffer.position(0)
     }
 
+
+    override fun surfaceCreated(id: Int) {
+        //【步骤1: 初始化顶点坐标】
+        setTextureID(id)
+        //【步骤2: 创建、编译并启动OpenGL着色器】
+        createGLPrg()
+        //【步骤3: 激活并绑定纹理单元】
+        activateTexture()
+    }
+
+    override fun surfaceChanged(w: Int, h: Int) {
+        mWorldWidth = w
+        mWorldHeight = h
+        initDefMatrix()
+    }
+
+    override fun drawFrame() {
+        if (mTextureId != -1) {
+            //【步骤4: 绑定图片到纹理单元】
+            updateTexture()
+            //【步骤5: 开始渲染绘制】
+            doDraw()
+        }
+    }
+
+    override fun setTextureID(id: Int) {
+        mTextureId = id
+        mSurfaceTexture = SurfaceTexture(id)
+        mSftCb?.invoke(mSurfaceTexture!!)
+    }
+
+
     private var mWidthRatio = 1f
     private var mHeightRatio = 1f
     private fun initDefMatrix() {
         if (mMatrix != null) return
         if (mVideoWidth != -1 && mVideoHeight != -1 &&
-            mWorldWidth != -1 && mWorldHeight != -1) {
+            mWorldWidth != -1 && mWorldHeight != -1
+        ) {
             mMatrix = FloatArray(16)
             var prjMatrix = FloatArray(16)
             val originRatio = mVideoWidth / mVideoHeight.toFloat()
@@ -156,45 +189,30 @@ class VideoDrawer : IDrawer {
     }
 
     override fun setWorldSize(worldW: Int, worldH: Int) {
-        mWorldWidth = worldW
-        mWorldHeight = worldH
+
     }
 
     override fun setAlpha(alpha: Float) {
         mAlpha = alpha
     }
 
-    override fun setTextureID(id: Int) {
-        mTextureId = id
-        mSurfaceTexture = SurfaceTexture(id)
-        mSftCb?.invoke(mSurfaceTexture!!)
+    override fun draw() {
+
     }
 
     override fun getSurfaceTexture(cb: (st: SurfaceTexture) -> Unit) {
         mSftCb = cb
     }
 
-    override fun draw() {
-        if (mTextureId != -1) {
-            initDefMatrix()
-            //【步骤2: 创建、编译并启动OpenGL着色器】
-            createGLPrg()
-            //【步骤3: 激活并绑定纹理单元】
-            activateTexture()
-            //【步骤4: 绑定图片到纹理单元】
-            updateTexture()
-            //【步骤5: 开始渲染绘制】
-            doDraw()
-        }
-    }
-
     private fun createGLPrg() {
         if (mProgram == -1) {
+            //创建OpenGL ES程序，注意：需要在OpenGL渲染线程中创建，否则无法渲染
+            mProgram = GLES20.glCreateProgram()
+
+
             val vertexShader = loadShader(GLES20.GL_VERTEX_SHADER, getVertexShader())
             val fragmentShader = loadShader(GLES20.GL_FRAGMENT_SHADER, getFragmentShader())
 
-            //创建OpenGL ES程序，注意：需要在OpenGL渲染线程中创建，否则无法渲染
-            mProgram = GLES20.glCreateProgram()
             //将顶点着色器加入到程序
             GLES20.glAttachShader(mProgram, vertexShader)
             //将片元着色器加入到程序中
@@ -220,10 +238,26 @@ class VideoDrawer : IDrawer {
         //将激活的纹理单元传递到着色器里面
         GLES20.glUniform1i(mTextureHandler, 0)
         //配置边缘过渡参数
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR.toFloat())
-        GLES20.glTexParameterf(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR.toFloat())
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
-        GLES20.glTexParameteri(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+        GLES20.glTexParameterf(
+            GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+            GLES20.GL_TEXTURE_MIN_FILTER,
+            GLES20.GL_LINEAR.toFloat()
+        )
+        GLES20.glTexParameterf(
+            GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+            GLES20.GL_TEXTURE_MAG_FILTER,
+            GLES20.GL_LINEAR.toFloat()
+        )
+        GLES20.glTexParameteri(
+            GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+            GLES20.GL_TEXTURE_WRAP_S,
+            GLES20.GL_CLAMP_TO_EDGE
+        )
+        GLES20.glTexParameteri(
+            GLES11Ext.GL_TEXTURE_EXTERNAL_OES,
+            GLES20.GL_TEXTURE_WRAP_T,
+            GLES20.GL_CLAMP_TO_EDGE
+        )
     }
 
     private fun updateTexture() {
@@ -237,7 +271,14 @@ class VideoDrawer : IDrawer {
         GLES20.glUniformMatrix4fv(mVertexMatrixHandler, 1, false, mMatrix, 0)
         //设置着色器参数， 第二个参数表示一个顶点包含的数据数量，这里为xy，所以为2
         GLES20.glVertexAttribPointer(mVertexPosHandler, 2, GLES20.GL_FLOAT, false, 0, mVertexBuffer)
-        GLES20.glVertexAttribPointer(mTexturePosHandler, 2, GLES20.GL_FLOAT, false, 0, mTextureBuffer)
+        GLES20.glVertexAttribPointer(
+            mTexturePosHandler,
+            2,
+            GLES20.GL_FLOAT,
+            false,
+            0,
+            mTextureBuffer
+        )
         GLES20.glVertexAttrib1f(mAlphaHandler, mAlpha)
         //开始绘制
         GLES20.glDrawArrays(GLES20.GL_TRIANGLE_STRIP, 0, 4)
@@ -290,7 +331,7 @@ class VideoDrawer : IDrawer {
     }
 
     fun translate(dx: Float, dy: Float) {
-        Matrix.translateM(mMatrix, 0, dx*mWidthRatio*2, -dy*mHeightRatio*2, 0f)
+        Matrix.translateM(mMatrix, 0, dx * mWidthRatio * 2, -dy * mHeightRatio * 2, 0f)
     }
 
     fun scale(sx: Float, sy: Float) {

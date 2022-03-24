@@ -21,20 +21,17 @@ import java.nio.ByteBuffer
  */
 class VideoDecoder(
     url: String,
-    private val glSurfaceView: GLSurfaceView?,
     private var surfaceView: SurfaceView?,
     private var surface: Surface?
 ) : BaseDecoder(url) {
     private val TAG = "VideoDecoder"
 
     override fun check(): Boolean {
-        if (glSurfaceView == null && surfaceView == null && surface == null) {
+        if (surfaceView == null && surface == null) {
             Log.e(TAG, "SurfaceView和Surface都为空，至少需要一个不为空")
             mStateListener?.decoderError(this, "显示器为空")
             return false
         }
-
-
         return true
     }
 
@@ -42,24 +39,16 @@ class VideoDecoder(
         return VideoExtractor(path)
     }
 
-    override fun initSpecParams(format: MediaFormat) {
-
-    }
-
 
     override fun configCodec(codec: MediaCodec, format: MediaFormat): Boolean {
-        if (glSurfaceView != null) {
-
-        }
-
-        if (mSurface != null) {
-            codec.configure(format, mSurface, null, 0)
+        if (surface != null) {
+            codec.configure(format, surface, null, 0)
             notifyDecode()
-        } else if (mSurfaceView?.holder?.surface != null) {
-            mSurface = mSurfaceView.holder.surface
+        } else if (surfaceView?.holder?.surface != null) {
+            surface = surfaceView!!.holder.surface
             configCodec(codec, format)
         } else {
-            mSurfaceView?.holder?.addCallback(object : SurfaceHolder.Callback2 {
+            surfaceView?.holder?.addCallback(object : SurfaceHolder.Callback2 {
                 override fun surfaceRedrawNeeded(holder: SurfaceHolder) {
                 }
 
@@ -75,25 +64,12 @@ class VideoDecoder(
                 }
 
                 override fun surfaceCreated(holder: SurfaceHolder) {
-                    mSurface = holder.surface
+                    surface = holder.surface
                     configCodec(codec, format)
                 }
             })
             return false
         }
         return true
-    }
-
-    override fun initRender(): Boolean {
-        return true
-    }
-
-    override fun render(
-        outputBuffer: ByteBuffer?,
-        bufferInfo: MediaCodec.BufferInfo
-    ) {
-    }
-
-    override fun doneDecode() {
     }
 }

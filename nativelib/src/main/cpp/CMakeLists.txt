@@ -5,9 +5,9 @@ cmake_minimum_required(VERSION 3.10.2)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
 
 #项目名称
-project("nativelib")
+project("ffmpeglib")
 
-set(libname learn-ffmpeg)
+set(libname ffmpeglib)
 set(jnilibs ${CMAKE_SOURCE_DIR}/../jniLibs)
 
 #引入动态库

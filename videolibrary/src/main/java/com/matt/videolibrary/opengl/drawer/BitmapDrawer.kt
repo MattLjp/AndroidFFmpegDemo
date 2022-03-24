@@ -160,6 +160,18 @@ class BitmapDrawer(private val mBitmap: Bitmap): IDrawer {
         GLES20.glDeleteProgram(mProgram)
     }
 
+    override fun surfaceCreated(id: Int) {
+
+    }
+
+    override fun surfaceChanged(w: Int, h: Int) {
+
+    }
+
+    override fun drawFrame() {
+
+    }
+
     private fun getVertexShader(): String {
         return "attribute vec4 aPosition;" +
                 "attribute vec2 aCoordinate;" +

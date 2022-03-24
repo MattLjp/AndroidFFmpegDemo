@@ -20,4 +20,10 @@ interface IDrawer {
     fun setTextureID(id: Int)
     fun getSurfaceTexture(cb: (st: SurfaceTexture)->Unit) {}
     fun release()
+
+    fun surfaceCreated(id: Int)
+
+    fun surfaceChanged(w: Int, h: Int)
+
+    fun drawFrame()
 }
