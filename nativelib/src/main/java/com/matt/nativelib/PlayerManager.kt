@@ -35,7 +35,7 @@ object PlayerManager {
         audioRender = AudioRender()
         videoRender = OpenGlRender()
 
-        if (decoderType == DecoderType.MediaDecoder) {
+        if (decoderType == DecoderType.NativeDecoder) {
             if (glSurfaceView == null && surfaceView == null && surface == null) return
             audioDecoder = AudioDecoder(url)
             if (glSurfaceView != null) {
@@ -77,7 +77,7 @@ object PlayerManager {
     }
 
     enum class DecoderType {
-        MediaDecoder,
+        NativeDecoder,
         FFmpegDecoder
     }
 }

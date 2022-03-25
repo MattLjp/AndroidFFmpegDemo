@@ -32,8 +32,6 @@ interface IExtractor {
      */
     fun seek(pos: Long): Long
 
-    fun setStartPos(pos: Long)
-
     /**
      * 停止读取数据
      */

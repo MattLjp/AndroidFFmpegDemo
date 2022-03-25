@@ -27,12 +27,12 @@ class VideoDecoder(
     private val TAG = "VideoDecoder"
 
     override fun check(): Boolean {
-        if (surfaceView == null && surface == null) {
-            Log.e(TAG, "SurfaceView和Surface都为空，至少需要一个不为空")
-            mStateListener?.decoderError(this, "显示器为空")
-            return false
-        }
-        return true
+//        if (surfaceView == null && surface == null) {
+//            Log.e(TAG, "SurfaceView和Surface都为空，至少需要一个不为空")
+//            mStateListener?.decoderError(this, "显示器为空")
+//            return false
+//        }
+        return url.isNotEmpty()
     }
 
     override fun initExtractor(path: String): IExtractor {
@@ -41,35 +41,35 @@ class VideoDecoder(
 
 
     override fun configCodec(codec: MediaCodec, format: MediaFormat): Boolean {
-        if (surface != null) {
-            codec.configure(format, surface, null, 0)
-            notifyDecode()
-        } else if (surfaceView?.holder?.surface != null) {
-            surface = surfaceView!!.holder.surface
-            configCodec(codec, format)
-        } else {
-            surfaceView?.holder?.addCallback(object : SurfaceHolder.Callback2 {
-                override fun surfaceRedrawNeeded(holder: SurfaceHolder) {
-                }
-
-                override fun surfaceChanged(
-                    holder: SurfaceHolder,
-                    format: Int,
-                    width: Int,
-                    height: Int
-                ) {
-                }
-
-                override fun surfaceDestroyed(holder: SurfaceHolder) {
-                }
-
-                override fun surfaceCreated(holder: SurfaceHolder) {
-                    surface = holder.surface
-                    configCodec(codec, format)
-                }
-            })
-            return false
-        }
-        return true
+//        if (surface != null) {
+//            codec.configure(format, surface, null, 0)
+//            notifyDecode()
+//        } else if (surfaceView?.holder?.surface != null) {
+//            surface = surfaceView!!.holder.surface
+//            configCodec(codec, format)
+//        } else {
+//            surfaceView?.holder?.addCallback(object : SurfaceHolder.Callback2 {
+//                override fun surfaceRedrawNeeded(holder: SurfaceHolder) {
+//                }
+//
+//                override fun surfaceChanged(
+//                    holder: SurfaceHolder,
+//                    format: Int,
+//                    width: Int,
+//                    height: Int
+//                ) {
+//                }
+//
+//                override fun surfaceDestroyed(holder: SurfaceHolder) {
+//                }
+//
+//                override fun surfaceCreated(holder: SurfaceHolder) {
+//                    surface = holder.surface
+//                    configCodec(codec, format)
+//                }
+//            })
+//            return false
+//        }
+        return false
     }
 }

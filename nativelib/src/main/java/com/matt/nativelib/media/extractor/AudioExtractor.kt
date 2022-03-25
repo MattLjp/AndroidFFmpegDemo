@@ -35,10 +35,6 @@ class AudioExtractor(path: String) : IExtractor {
         return mMediaExtractor.seek(pos)
     }
 
-    override fun setStartPos(pos: Long) {
-        return mMediaExtractor.setStartPos(pos)
-    }
-
     override fun stop() {
         mMediaExtractor.stop()
     }

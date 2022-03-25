@@ -16,7 +16,7 @@ import java.nio.ByteBuffer
 class AudioDecoder(url: String) : BaseDecoder(url) {
 
     override fun check(): Boolean {
-        return true
+        return url.isNotEmpty()
     }
 
     override fun initExtractor(path: String): IExtractor {

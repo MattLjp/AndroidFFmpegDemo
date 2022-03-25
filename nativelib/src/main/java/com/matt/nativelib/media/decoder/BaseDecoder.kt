@@ -18,7 +18,7 @@ import java.io.File
  * @email 329524627@qq.com
  * @Description :
  */
-abstract class BaseDecoder(private val url: String) {
+abstract class BaseDecoder(protected val url: String) {
 
     private val TAG = "BaseDecoder"
 
@@ -69,13 +69,7 @@ abstract class BaseDecoder(private val url: String) {
      */
     private var mIsEOS = false
 
-    protected var mVideoWidth = 0
-
-    protected var mVideoHeight = 0
-
     private var mDuration: Long = 0
-
-    private var mEndPos: Long = 0
 
     /**
      * 开始解码时间，用于音视频同步
@@ -132,7 +126,6 @@ abstract class BaseDecoder(private val url: String) {
         try {
             val format = mExtractor!!.getFormat()!!
             mDuration = format.getLong(MediaFormat.KEY_DURATION) / 1000
-            if (mEndPos == 0L) mEndPos = mDuration
         } catch (e: Exception) {
             return false
         }
@@ -255,7 +248,6 @@ abstract class BaseDecoder(private val url: String) {
         val curTime = getCurTimeStamp()
         if (curTime > passTime) {
             delay(curTime - passTime)
-
         }
     }
 
@@ -322,9 +314,6 @@ abstract class BaseDecoder(private val url: String) {
         return 0
     }
 
-    fun seekAndPlay(pos: Long): Long {
-        return 0
-    }
 
     fun stop() {
         mState = DecodeState.STOP
@@ -333,20 +322,11 @@ abstract class BaseDecoder(private val url: String) {
         videoVideoRender?.release()
     }
 
-
-    fun getWidth(): Int {
-        return mVideoWidth
-    }
-
-    fun getHeight(): Int {
-        return mVideoHeight
-    }
-
     fun getDuration(): Long {
         return mDuration
     }
 
-    fun getCurTimeStamp(): Long {
+    private fun getCurTimeStamp(): Long {
         return mBufferInfo.presentationTimeUs / 1000
     }
 

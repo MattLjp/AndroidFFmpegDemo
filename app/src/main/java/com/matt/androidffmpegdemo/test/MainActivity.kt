@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun clickSimplePlayer(view: View) {
-        startActivity(Intent(this, SimplePlayerActivity::class.java))
+//        startActivity(Intent(this, SimplePlayerActivity::class.java))
     }
 
     fun clickSimpleTriangle(view: View) {
@@ -49,19 +49,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun clickOpenGLPlayer(view: View?) {
-        startActivity(Intent(this, OpenGLPlayerActivity::class.java))
+//        startActivity(Intent(this, OpenGLPlayerActivity::class.java))
     }
 
     fun clickMultiOpenGLPlayer(view: View?) {
-        startActivity(Intent(this, MultiOpenGLPlayerActivity::class.java))
+//        startActivity(Intent(this, MultiOpenGLPlayerActivity::class.java))
     }
 
     fun clickEGLPlayer(view: View?) {
-        startActivity(Intent(this, EGLPlayerActivity::class.java))
+//        startActivity(Intent(this, EGLPlayerActivity::class.java))
     }
 
     fun clickSoulPlayer(view: View?) {
-        startActivity(Intent(this, SoulPlayerActivity::class.java))
+//        startActivity(Intent(this, SoulPlayerActivity::class.java))
     }
 
     fun clickEncoder(view: View?) {

@@ -29,8 +29,6 @@ class MMExtractor(path: String) {
     /**当前帧标志*/
     private var mCurSampleFlag: Int = 0
 
-    /**开始解码时间点*/
-    private var mStartPos: Long = 0
 
     init {
         mExtractor = MediaExtractor()
@@ -124,9 +122,6 @@ class MMExtractor(path: String) {
         return mAudioTrack
     }
 
-    fun setStartPos(pos: Long) {
-        mStartPos = pos
-    }
 
     /**
      * 获取当前帧时间

@@ -24,11 +24,11 @@
             </intent-filter>
         </activity>
 <!--        <activity android:name=".test.SimpleRenderActivity"/>-->
-        <activity android:name=".test.SimplePlayerActivity"/>
-        <activity android:name=".test.OpenGLPlayerActivity"/>
-        <activity android:name=".test.MultiOpenGLPlayerActivity"/>
-        <activity android:name=".test.EGLPlayerActivity"/>
-        <activity android:name=".test.SoulPlayerActivity"/>
+<!--        <activity android:name=".test.SimplePlayerActivity"/>-->
+<!--        <activity android:name=".test.OpenGLPlayerActivity"/>-->
+<!--        <activity android:name=".test.MultiOpenGLPlayerActivity"/>-->
+<!--        <activity android:name=".test.EGLPlayerActivity"/>-->
+<!--        <activity android:name=".test.SoulPlayerActivity"/>-->
 <!--        <activity android:name=".test.SynthesizerActivity"/>-->
 <!--        <activity android:name=".test.FFmpegActivity" />-->
 <!--        <activity android:name=".test.FFmpegGLPlayerActivity" />-->
