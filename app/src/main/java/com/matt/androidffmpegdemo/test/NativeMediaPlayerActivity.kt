@@ -4,13 +4,13 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Environment
-import android.util.Log
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.matt.androidffmpegdemo.databinding.ActivityNativeMediaPlayerBinding
+import com.matt.nativelib.Player
 
 class NativeMediaPlayerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityNativeMediaPlayerBinding
@@ -20,10 +20,22 @@ class NativeMediaPlayerActivity : AppCompatActivity() {
         Environment.getExternalStorageDirectory().absolutePath + "/byteflow/one_piece.mp4"
 
 
+    private lateinit var player: Player
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityNativeMediaPlayerBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        binding.play.setOnClickListener {
+            val isPlay = it.isSelected
+            it.isSelected = !isPlay
+            if (isPlay) {
+                player.pause()
+            } else {
+                player.play()
+            }
+        }
 
         binding.seekBar.setOnSeekBarChangeListener(object : OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar, i: Int, b: Boolean) {}
@@ -32,16 +44,17 @@ class NativeMediaPlayerActivity : AppCompatActivity() {
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
-                Log.d(
-                    TAG,
-                    "onStopTrackingTouch() called with: progress = [" + seekBar.progress + "]"
-                )
-                if (mMediaPlayer != null) {
-                    mMediaPlayer.seekToPosition(mSeekBar.progress)
-                    mIsTouch = false
-                }
+
+//                if (mMediaPlayer != null) {
+//                    mMediaPlayer.seekToPosition(mSeekBar.progress)
+//                    mIsTouch = false
+//                }
             }
         })
+
+
+        player.create(Player.DecoderType.NativeDecoder, mVideoPath, binding.surfaceView)
+
     }
 
     override fun onResume() {
@@ -75,6 +88,7 @@ class NativeMediaPlayerActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        player.release()
     }
 
     protected fun hasPermissionsGranted(permissions: Array<String?>): Boolean {

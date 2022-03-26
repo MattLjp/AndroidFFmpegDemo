@@ -1,10 +1,10 @@
 package com.matt.androidffmpegdemo.test
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.matt.androidffmpegdemo.CommonUtils
 import com.matt.androidffmpegdemo.databinding.ActivityMainBinding
 import com.yanzhenjie.permission.AndPermission
 import com.yanzhenjie.permission.Permission
@@ -82,5 +82,10 @@ class MainActivity : AppCompatActivity() {
 
     fun clickFFmpegEncode(view: View?) {
 //        startActivity(Intent(this, FFEncodeActivity::class.java))
+    }
+
+    override fun onResume() {
+        super.onResume()
+        CommonUtils.copyAssetsDirToSDCard(this, "byteflow", "/sdcard")
     }
 }

@@ -3,7 +3,7 @@ package com.matt.nativelib.media.render
 import android.graphics.SurfaceTexture
 import android.media.MediaCodec
 import android.media.MediaFormat
-import java.nio.ByteBuffer
+import com.matt.nativelib.media.decoder.BaseDecoder
 
 /**
  *
@@ -16,7 +16,7 @@ interface IVideoRender {
     /**
      * 初始化渲染器
      */
-    fun initRender(format: MediaFormat): Boolean
+    fun initRender(baseDecoder: BaseDecoder, codec: MediaCodec, format: MediaFormat): Boolean
 
     fun surfaceCreated(id: Int)
 
@@ -26,7 +26,8 @@ interface IVideoRender {
 
     fun translate(dx: Float, dy: Float)
 
-    fun getSurfaceTexture(cb: (st: SurfaceTexture)->Unit) {}
+    fun getSurfaceTexture(cb: (st: SurfaceTexture) -> Unit) {}
+
     /**
      * 释放
      */

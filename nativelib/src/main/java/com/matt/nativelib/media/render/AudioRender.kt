@@ -1,6 +1,7 @@
 package com.matt.nativelib.media.render
 
 import android.media.*
+import com.matt.nativelib.media.Frame
 import java.nio.ByteBuffer
 
 /**
@@ -58,13 +59,14 @@ class AudioRender : IAudioRender {
     }
 
 
-    override fun renderOneFrame(outputBuffer: ByteBuffer?, bufferInfo: MediaCodec.BufferInfo) {
-        if (mAudioOutTempBuf!!.size < bufferInfo.size / 2) {
-            mAudioOutTempBuf = ShortArray(bufferInfo.size / 2)
+    override fun renderOneFrame(frame: Frame) {
+
+        if (mAudioOutTempBuf!!.size < frame.bufferInfo.size / 2) {
+            mAudioOutTempBuf = ShortArray(frame.bufferInfo.size / 2)
         }
-        outputBuffer?.position(0)
-        outputBuffer?.asShortBuffer()?.get(mAudioOutTempBuf, 0, bufferInfo.size / 2)
-        mAudioTrack!!.write(mAudioOutTempBuf!!, 0, bufferInfo.size / 2)
+        frame.buffer?.position(0)
+        frame.buffer?.asShortBuffer()?.get(mAudioOutTempBuf, 0, frame.bufferInfo.size / 2)
+        mAudioTrack!!.write(mAudioOutTempBuf!!, 0, frame.bufferInfo.size / 2)
     }
 
     override fun release() {

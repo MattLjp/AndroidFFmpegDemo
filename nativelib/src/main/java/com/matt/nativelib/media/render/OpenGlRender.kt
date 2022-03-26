@@ -6,6 +6,7 @@ import android.media.MediaFormat
 import android.opengl.GLES11Ext
 import android.opengl.GLES20
 import android.opengl.Matrix
+import com.matt.nativelib.media.decoder.BaseDecoder
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
@@ -77,10 +78,11 @@ class OpenGlRender : IVideoRender {
         initPos()
     }
 
-    override fun initRender(format: MediaFormat): Boolean {
+
+    override fun initRender(baseDecoder: BaseDecoder, codec: MediaCodec, format: MediaFormat): Boolean {
         mVideoWidth = format.getInteger(MediaFormat.KEY_WIDTH)
         mVideoHeight = format.getInteger(MediaFormat.KEY_HEIGHT)
-        return true
+        return false
     }
 
     override fun surfaceCreated(id: Int){
