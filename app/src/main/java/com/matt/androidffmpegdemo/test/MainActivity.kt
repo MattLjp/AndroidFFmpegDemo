@@ -1,5 +1,6 @@
 package com.matt.androidffmpegdemo.test
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
@@ -33,7 +34,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun clickSimplePlayer(view: View) {
-//        startActivity(Intent(this, SimplePlayerActivity::class.java))
+        startActivity(Intent(this, NativeMediaPlayerActivity::class.java))
     }
 
     fun clickSimpleTriangle(view: View) {
@@ -86,6 +87,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        CommonUtils.copyAssetsDirToSDCard(this, "byteflow", "/sdcard")
+        CommonUtils.copyAssetsDirToSDCard(this, "byteflow", externalCacheDir.toString())
     }
 }

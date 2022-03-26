@@ -3,6 +3,7 @@ package com.matt.nativelib.media.extractor
 import android.media.MediaFormat
 import java.nio.ByteBuffer
 
+
 /**
  * 音频数据提取器
  *
@@ -11,7 +12,7 @@ import java.nio.ByteBuffer
  * @email 329524627@qq.com
  * @Description :
  */
-class AudioExtractor(path: String) : IExtractor {
+class AudioExtractor(path: String): IExtractor {
 
     private val mMediaExtractor = MMExtractor(path)
 
@@ -31,8 +32,8 @@ class AudioExtractor(path: String) : IExtractor {
         return mMediaExtractor.getSampleFlag()
     }
 
-    override fun seek(pos: Long): Long {
-        return mMediaExtractor.seek(pos)
+    override fun seek(timeUs: Long): Long {
+        return mMediaExtractor.seek(timeUs)
     }
 
     override fun stop() {

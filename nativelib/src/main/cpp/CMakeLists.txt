@@ -10,9 +10,6 @@ project("ffmpeglib")
 set(libname ffmpeglib)
 set(jnilibs ${CMAKE_SOURCE_DIR}/../jniLibs)
 
-#引入动态库
-link_directories(
-        ${jnilibs}/${ANDROID_ABI})
 
 #此处导入头文件目录
 include_directories(
@@ -25,10 +22,13 @@ include_directories(
         ${CMAKE_SOURCE_DIR}/player/decoder
         ${CMAKE_SOURCE_DIR}/player/render
         ${CMAKE_SOURCE_DIR}/player/render/audio
-        ${CMAKE_SOURCE_DIR}/player/render/video)
+        ${CMAKE_SOURCE_DIR}/player/render/video
+)
 
 
-
+#引入动态库
+link_directories(
+        ${jnilibs}/${ANDROID_ABI})
 
 file(GLOB src-files
         ${CMAKE_SOURCE_DIR}/*.cpp

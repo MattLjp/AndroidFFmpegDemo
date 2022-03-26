@@ -5,9 +5,9 @@ import android.media.MediaFormat
 import android.util.Log
 import com.matt.nativelib.media.Frame
 import com.matt.nativelib.media.extractor.IExtractor
-import com.matt.nativelib.media.render.IVideoRender
-import kotlinx.coroutines.*
 import java.io.File
+import java.nio.ByteBuffer
+
 
 /**
  * 解码器基类
@@ -17,23 +17,9 @@ import java.io.File
  * @email 329524627@qq.com
  * @Description :
  */
-abstract class BaseDecoder(protected val url: String) {
+abstract class BaseDecoder(private val filePath: String) : Runnable {
 
     private val TAG = "BaseDecoder"
-
-    enum class DecodeState {
-        /**开始状态*/
-        START,
-
-        /**解码中*/
-        DECODING,
-
-        /**解码暂停*/
-        PAUSE,
-
-        /**解码器释放*/
-        STOP
-    }
 
     //-------------线程相关------------------------
 
@@ -41,7 +27,6 @@ abstract class BaseDecoder(protected val url: String) {
      * 线程等待锁
      */
     private val mLock = Object()
-
 
     //---------------状态相关-----------------------
     /**
@@ -55,13 +40,23 @@ abstract class BaseDecoder(protected val url: String) {
     private var mExtractor: IExtractor? = null
 
     /**
+     * 解码输入缓存区
+     */
+    private var mInputBuffers: Array<ByteBuffer>? = null
+
+    /**
+     * 解码输出缓存区
+     */
+    private var mOutputBuffers: Array<ByteBuffer>? = null
+
+    /**
      * 解码数据信息
      */
     private var mBufferInfo = MediaCodec.BufferInfo()
 
     private var mState = DecodeState.STOP
 
-    var mStateListener: IDecoderStateListener? = null
+    var stateListener: IDecoderStateListener? = null
 
     /**
      * 流数据是否结束
@@ -70,46 +65,128 @@ abstract class BaseDecoder(protected val url: String) {
 
     private var mDuration: Long = 0
 
+
     /**
      * 开始解码时间，用于音视频同步
      */
     private var mStartTimeForSync = -1L
 
-    private val iOScope by lazy { CoroutineScope(Dispatchers.IO) }
+    // 是否需要音视频渲染同步
+    private var mSyncRender = true
 
-    fun initDecoder() {
+    private var seekToPos = 0
+
+    final override fun run() {
+        mState = DecodeState.READY
+        stateListener?.decoderReady(this)
+
         //【解码步骤：1. 初始化，并启动解码器】
-        if (url.isEmpty() || !File(url).exists()) {
+        if (!init()) return
+
+        Log.i(TAG, "开始解码")
+        try {
+            while (mState != DecodeState.FINISH && mState != DecodeState.STOP) {
+                if (mState == DecodeState.PAUSE) {
+                    Log.i(TAG, "进入等待：$mState")
+                    waitDecode()
+                    // ---------【同步时间矫正】-------------
+                    //恢复同步的起始时间，即去除等待流失的时间
+                    mStartTimeForSync = System.currentTimeMillis() - getCurTimeStamp()
+                } else if (mState == DecodeState.SEEKING) {
+                    val timeUs = mDuration * seekToPos / 100
+                    mStartTimeForSync =
+                        System.currentTimeMillis() - (mExtractor?.seek(timeUs) ?: getCurTimeStamp())
+                    mState = DecodeState.DECODING
+                }
+
+                if (mStartTimeForSync == -1L) {
+                    mStartTimeForSync = System.currentTimeMillis()
+                }
+
+                //如果数据没有解码完毕，将数据推入解码器解码
+                if (!mIsEOS) {
+                    //【解码步骤：2. 见数据压入解码器输入缓冲】
+                    mIsEOS = pushBufferToDecoder()
+                }
+
+                //【解码步骤：3. 将解码好的数据从缓冲区拉取出来】
+                val index = pullBufferFromDecoder()
+                if (index >= 0) {
+                    // ---------【音视频同步】-------------
+                    if (mSyncRender && mState == DecodeState.DECODING) {
+                        sleepRender()
+                    }
+                    //【解码步骤：4. 渲染】
+                    if (mSyncRender) {// 如果只是用于编码合成新视频，无需渲染
+                        render(mOutputBuffers!![index], mBufferInfo)
+                    }
+
+                    //将解码数据传递出去
+                    val frame = Frame()
+                    frame.buffer = mOutputBuffers!![index]
+                    frame.setBufferInfo(mBufferInfo)
+                    val time = getCurTimeStamp() * 1000
+                    val position = time * 100 / mDuration
+                    stateListener?.decodeOneFrame(this, frame, time, position)
+
+                    //【解码步骤：5. 释放输出缓冲】
+                    mCodec!!.releaseOutputBuffer(index, true)
+
+                    if (mState == DecodeState.READY) {
+                        mState = DecodeState.PAUSE
+                    }
+                }
+                //【解码步骤：6. 判断解码是否完成】
+                if (mBufferInfo.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM) {
+                    Log.i(TAG, "解码结束")
+                    mState = DecodeState.FINISH
+                    stateListener?.decoderFinish(this)
+                }
+            }
+        } catch (e: Exception) {
+            mState = DecodeState.STOP
+            e.printStackTrace()
+        } finally {
+            doneDecode()
+            release()
+        }
+    }
+
+    private fun init(): Boolean {
+        if (filePath.isEmpty() || !File(filePath).exists()) {
             Log.w(TAG, "文件路径为空")
-            mStateListener?.decoderError(this, "文件路径为空")
-            return
+            stateListener?.decoderError(this, "文件路径为空")
+            return false
         }
 
-        if (!check()) return
+        if (!check()) return false
 
         //初始化数据提取器
-        mExtractor = initExtractor(url)
+        mExtractor = initExtractor(filePath)
         if (mExtractor == null ||
             mExtractor!!.getFormat() == null
         ) {
-            Log.e(TAG, "无法解析文件")
-            return
+            Log.w(TAG, "无法解析文件")
+            return false
         }
 
         //初始化参数
-        if (!initParams()) return
+        if (!initParams()) return false
+
+        //初始化渲染器
+        if (!initRender()) return false
 
         //初始化解码器
-        if (!initCodec()) return
-
-        mState = DecodeState.START
-        mStateListener?.decoderReady(this)
+        if (!initCodec()) return false
+        return true
     }
 
     private fun initParams(): Boolean {
         try {
             val format = mExtractor!!.getFormat()!!
-            mDuration = format.getLong(MediaFormat.KEY_DURATION) / 1000
+            mDuration = format.getLong(MediaFormat.KEY_DURATION)
+
+            initSpecParams(mExtractor!!.getFormat()!!)
         } catch (e: Exception) {
             return false
         }
@@ -120,95 +197,39 @@ abstract class BaseDecoder(protected val url: String) {
         try {
             val type = mExtractor!!.getFormat()!!.getString(MediaFormat.KEY_MIME)
             mCodec = MediaCodec.createDecoderByType(type!!)
-            if (!configCodec(this, mCodec!!, mExtractor!!.getFormat()!!)) {
+            if (!configCodec(mCodec!!, mExtractor!!.getFormat()!!)) {
                 waitDecode()
             }
             mCodec!!.start()
+
+            mInputBuffers = mCodec?.inputBuffers
+            mOutputBuffers = mCodec?.outputBuffers
         } catch (e: Exception) {
             return false
         }
         return true
     }
 
-
-    private suspend fun decoding() {
-        mState = DecodeState.DECODING
-        mStateListener?.decoderRunning(this)
-        Log.i(TAG, "开始解码")
-        try {
-            while (mState != DecodeState.STOP) {
-                if (mState == DecodeState.PAUSE) {
-                    Log.i(TAG, "进入等待：$mState")
-                    waitDecode()
-                    // ---------【同步时间矫正】-------------
-                    //恢复同步的起始时间，即去除等待流失的时间
-                    mStartTimeForSync = System.currentTimeMillis() - getCurTimeStamp()
-                }
-
-                if (mStartTimeForSync == -1L) {
-                    mStartTimeForSync = System.currentTimeMillis()
-                }
-
-                //如果数据没有解码完毕，将数据推入解码器解码
-                if (!mIsEOS) {
-                    //【解码步骤：2. 将数据压入解码器输入缓冲】
-                    mIsEOS = pushBufferToDecoder()
-                }
-
-                //【解码步骤：3. 将解码好的数据从缓冲区拉取出来】
-                val index = pullBufferFromDecoder()
-                if (index >= 0) {
-                    // ---------【音视频同步】-------------
-                    sleepRender()
-
-                    //【解码步骤：4. 渲染】
-                    val outputBuffer = mCodec!!.getOutputBuffer(index)
-
-                    //将解码数据传递出去
-                    val frame = Frame()
-                    frame.buffer = outputBuffer
-                    frame.setBufferInfo(mBufferInfo)
-                    decodeOneFrame(frame)
-                    mStateListener?.decodeOneFrame(this, frame)
-
-                    //【解码步骤：5. 释放输出缓冲】
-                    mCodec!!.releaseOutputBuffer(index, true)
-
-                }
-                //【解码步骤：6. 判断解码是否完成】
-                if (mBufferInfo.flags == MediaCodec.BUFFER_FLAG_END_OF_STREAM) {
-                    Log.i(TAG, "解码结束")
-                    mState = DecodeState.STOP
-                    mStateListener?.decoderFinish(this)
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-            releaseDecoder()
-        }
-    }
-
-
     private fun pushBufferToDecoder(): Boolean {
         val inputBufferIndex = mCodec!!.dequeueInputBuffer(1000)
         var isEndOfStream = false
 
         if (inputBufferIndex >= 0) {
-            val inputBuffer = mCodec!!.getInputBuffer(inputBufferIndex)
-            if (inputBuffer != null) {
-                val sampleSize = mExtractor!!.readBuffer(inputBuffer)
-                mCodec!!.queueInputBuffer(
-                    inputBufferIndex, 0,
-                    sampleSize, mExtractor!!.getCurrentTimestamp(), 0
-                )
-            } else {
+            val inputBuffer = mInputBuffers!![inputBufferIndex]
+            val sampleSize = mExtractor!!.readBuffer(inputBuffer)
+
+            if (sampleSize < 0) {
                 //如果数据已经取完，压入数据结束标志：MediaCodec.BUFFER_FLAG_END_OF_STREAM
                 mCodec!!.queueInputBuffer(
                     inputBufferIndex, 0, 0,
                     0, MediaCodec.BUFFER_FLAG_END_OF_STREAM
                 )
                 isEndOfStream = true
+            } else {
+                mCodec!!.queueInputBuffer(
+                    inputBufferIndex, 0,
+                    sampleSize, mExtractor!!.getCurrentTimestamp(), 0
+                )
             }
         }
         return isEndOfStream
@@ -219,7 +240,9 @@ abstract class BaseDecoder(protected val url: String) {
         when (val index = mCodec!!.dequeueOutputBuffer(mBufferInfo, 1000)) {
             MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {}
             MediaCodec.INFO_TRY_AGAIN_LATER -> {}
-
+            MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED -> {
+                mOutputBuffers = mCodec!!.outputBuffers
+            }
             else -> {
                 return index
             }
@@ -227,24 +250,22 @@ abstract class BaseDecoder(protected val url: String) {
         return -1
     }
 
-    private suspend fun sleepRender() {
+    private fun sleepRender() {
         val passTime = System.currentTimeMillis() - mStartTimeForSync
         val curTime = getCurTimeStamp()
         if (curTime > passTime) {
-            delay(curTime - passTime)
+            Thread.sleep(curTime - passTime)
         }
     }
 
-    private fun releaseDecoder() {
+    private fun release() {
         try {
             Log.i(TAG, "解码停止，释放解码器")
-            mState = DecodeState.STOP
             mIsEOS = false
             mExtractor?.stop()
             mCodec?.stop()
             mCodec?.release()
-            mStateListener?.decoderDestroy(this)
-            release()
+            stateListener?.decoderDestroy(this)
         } catch (e: Exception) {
         }
     }
@@ -255,7 +276,7 @@ abstract class BaseDecoder(protected val url: String) {
     private fun waitDecode() {
         try {
             if (mState == DecodeState.PAUSE) {
-                mStateListener?.decoderPause(this)
+                stateListener?.decoderPause(this)
             }
             synchronized(mLock) {
                 mLock.wait()
@@ -268,25 +289,12 @@ abstract class BaseDecoder(protected val url: String) {
     /**
      * 通知解码线程继续运行
      */
-    fun notifyDecode() {
+    protected fun notifyDecode() {
         synchronized(mLock) {
             mLock.notifyAll()
         }
         if (mState == DecodeState.DECODING) {
-            mStateListener?.decoderRunning(this)
-        }
-    }
-
-
-    fun start() {
-        if (mState == DecodeState.START) {
-            iOScope.launch {
-                //启动解码器
-                decoding()
-            }
-        } else if (mState == DecodeState.PAUSE) {
-            mState = DecodeState.DECODING
-            notifyDecode()
+            stateListener?.decoderRunning(this)
         }
     }
 
@@ -294,16 +302,33 @@ abstract class BaseDecoder(protected val url: String) {
         mState = DecodeState.PAUSE
     }
 
-
-    fun seekTo(pos: Long): Long {
-        return 0
+    fun start() {
+        mState = DecodeState.DECODING
+        notifyDecode()
     }
 
+    fun seekTo(pos: Int) {
+        seekToPos = pos
+        mState = DecodeState.SEEKING
+    }
 
     fun stop() {
         mState = DecodeState.STOP
         notifyDecode()
     }
+
+    fun isDecoding(): Boolean {
+        return mState == DecodeState.DECODING
+    }
+
+    fun isSeeking(): Boolean {
+        return mState == DecodeState.SEEKING
+    }
+
+    fun isStop(): Boolean {
+        return mState == DecodeState.STOP
+    }
+
 
     fun getDuration(): Long {
         return mDuration
@@ -330,21 +355,30 @@ abstract class BaseDecoder(protected val url: String) {
     abstract fun initExtractor(path: String): IExtractor
 
     /**
+     * 初始化子类自己特有的参数
+     */
+    abstract fun initSpecParams(format: MediaFormat)
+
+    /**
      * 配置解码器
      */
-    abstract fun configCodec(baseDecoder: BaseDecoder, codec: MediaCodec, format: MediaFormat): Boolean
-
-
-    /**
-     * 解码一帧数据
-     * @param frame Frame
-     */
-    abstract fun decodeOneFrame(frame: Frame)
-
+    abstract fun configCodec(codec: MediaCodec, format: MediaFormat): Boolean
 
     /**
-     * 释放
+     * 初始化渲染器
      */
-    abstract fun release()
+    abstract fun initRender(): Boolean
 
+    /**
+     * 渲染
+     */
+    abstract fun render(
+        outputBuffer: ByteBuffer,
+        bufferInfo: MediaCodec.BufferInfo
+    )
+
+    /**
+     * 结束解码
+     */
+    abstract fun doneDecode()
 }

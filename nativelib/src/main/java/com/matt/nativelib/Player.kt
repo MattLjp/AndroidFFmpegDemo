@@ -1,11 +1,15 @@
 package com.matt.nativelib
 
 import android.opengl.GLSurfaceView
+import android.util.Log
 import android.view.Surface
 import android.view.SurfaceView
+import com.matt.nativelib.media.Frame
+import com.matt.nativelib.media.decoder.IDecoderStateListener
 import com.matt.nativelib.media.decoder.AudioDecoder
+import com.matt.nativelib.media.decoder.BaseDecoder
 import com.matt.nativelib.media.decoder.VideoDecoder
-import com.matt.nativelib.media.render.*
+import java.util.concurrent.Executors
 
 /**
  * @ Author : 廖健鹏
@@ -15,24 +19,60 @@ import com.matt.nativelib.media.render.*
  */
 class Player {
 
+    private val TAG = javaClass.simpleName
     private var audioDecoder: AudioDecoder? = null
     private var videoDecoder: VideoDecoder? = null
 
+    private val listener = object : IDecoderStateListener {
+        override fun decoderReady(decodeJob: BaseDecoder?) {
 
-    fun create(
+        }
+
+        override fun decoderRunning(decodeJob: BaseDecoder?) {
+
+        }
+
+        override fun decoderPause(decodeJob: BaseDecoder?) {
+
+        }
+
+        override fun decodeOneFrame(
+            decodeJob: BaseDecoder?,
+            frame: Frame,
+            time: Long,
+            pos: Long
+        ) {
+            Log.d(TAG, "进度: $pos")
+        }
+
+        override fun decoderFinish(decodeJob: BaseDecoder?) {
+
+        }
+
+        override fun decoderDestroy(decodeJob: BaseDecoder?) {
+
+        }
+
+        override fun decoderError(decodeJob: BaseDecoder?, msg: String) {
+
+        }
+
+    }
+
+    fun init(
         decoderType: DecoderType,
         url: String,
         surfaceView: SurfaceView? = null,
         surface: Surface? = null,
         glSurfaceView: GLSurfaceView? = null,
     ) {
+        val threadPool = Executors.newFixedThreadPool(10)
+        audioDecoder = AudioDecoder(url)
 
         if (decoderType == DecoderType.NativeDecoder) {
             if (glSurfaceView == null && surfaceView == null && surface == null) return
-            audioDecoder = AudioDecoder(url).apply {
-                audioVideoRender = AudioRender()
-            }
-            videoDecoder = VideoDecoder(url)
+
+
             if (glSurfaceView != null) {
 //                val videoRender = OpenGlRender()
 //                val render = SimpleGLRender().apply {
@@ -46,10 +86,12 @@ class Player {
 //                glSurfaceView.setEGLContextClientVersion(2)
 //                glSurfaceView.setRenderer(render)
             } else {
-                videoDecoder?.videoVideoRender = VideoRender(surfaceView, surface)
+                videoDecoder = VideoDecoder(url, surfaceView, surface).apply {
+                    stateListener = listener
+                }
+                threadPool.execute(videoDecoder)
+                threadPool.execute(audioDecoder)
             }
-            audioDecoder!!.initDecoder()
-            videoDecoder!!.initDecoder()
         } else {
 
         }
@@ -70,9 +112,10 @@ class Player {
         videoDecoder?.stop()
     }
 
-    fun release(){
-        audioDecoder?.release()
-        videoDecoder?.release()
+    fun seekTo(int: Int) {
+        videoDecoder?.seekTo(int)
+        audioDecoder?.seekTo(int)
+
     }
 
     enum class DecoderType {

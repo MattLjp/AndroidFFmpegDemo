@@ -1,5 +1,6 @@
 package com.matt.nativelib.media.encoder
 
+
 /**
  * 编码状态回调接口
  *
@@ -9,7 +10,7 @@ package com.matt.nativelib.media.encoder
  * @Description :
  */
 interface IEncodeStateListener {
-    fun encodeReady(encoder: BaseEncoder)
-    fun encodeRunning(encoder: BaseEncoder)
+    fun encodeStart(encoder: BaseEncoder)
+    fun encodeProgress(encoder: BaseEncoder)
     fun encoderFinish(encoder: BaseEncoder)
 }

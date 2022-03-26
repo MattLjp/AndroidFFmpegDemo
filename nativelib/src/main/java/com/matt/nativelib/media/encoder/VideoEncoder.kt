@@ -6,9 +6,9 @@ import android.media.MediaFormat
 import android.os.Build
 import android.util.Log
 import android.view.Surface
-import com.matt.nativelib.media.encoder.BaseEncoder
 import com.matt.nativelib.media.muxer.MMuxer
 import java.nio.ByteBuffer
+
 
 /**
  * 视频编码器
@@ -19,7 +19,6 @@ import java.nio.ByteBuffer
  * @Description :
  */
 class VideoEncoder(muxer: MMuxer, width: Int, height: Int) : BaseEncoder(muxer, width, height) {
-
     private val TAG = "VideoEncoder"
 
     private val DEFAULT_ENCODE_FRAME_RATE = 30
@@ -31,11 +30,11 @@ class VideoEncoder(muxer: MMuxer, width: Int, height: Int) : BaseEncoder(muxer, 
     }
 
     override fun configEncoder(codec: MediaCodec) {
-        if (videoWidth <= 0 || videoHeight <= 0) {
-            throw IllegalArgumentException("Encode width or height is invalid, width: $videoWidth, height: $videoHeight")
+        if (mWidth <= 0 || mHeight <= 0) {
+            throw IllegalArgumentException("Encode width or height is invalid, width: $mWidth, height: $mHeight")
         }
-        val bitrate = 3 * videoWidth * videoHeight
-        val outputFormat = MediaFormat.createVideoFormat(encodeType(), videoWidth, videoHeight)
+        val bitrate = 3 * mWidth * mHeight
+        val outputFormat = MediaFormat.createVideoFormat(encodeType(), mWidth, mHeight)
         outputFormat.setInteger(MediaFormat.KEY_BIT_RATE, bitrate)
         outputFormat.setInteger(MediaFormat.KEY_FRAME_RATE, DEFAULT_ENCODE_FRAME_RATE)
         outputFormat.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 1)

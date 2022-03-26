@@ -2,16 +2,14 @@ package com.matt.nativelib.media.decoder
 
 import android.media.MediaCodec
 import android.media.MediaFormat
-import android.opengl.GLSurfaceView
 import android.util.Log
 import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
-import com.matt.nativelib.media.Frame
 import com.matt.nativelib.media.extractor.IExtractor
 import com.matt.nativelib.media.extractor.VideoExtractor
-import com.matt.nativelib.media.render.IVideoRender
 import java.nio.ByteBuffer
+
 
 /**
  * 视频解码器
@@ -21,33 +19,69 @@ import java.nio.ByteBuffer
  * @email 329524627@qq.com
  * @Description :
  */
-class VideoDecoder(url: String) : BaseDecoder(url) {
+class VideoDecoder(path: String, sfv: SurfaceView?, surface: Surface?): BaseDecoder(path) {
     private val TAG = "VideoDecoder"
 
-    /**
-     * 渲染器
-     */
-    var videoVideoRender: IVideoRender? = null
+    private val mSurfaceView = sfv
+    private var mSurface = surface
 
     override fun check(): Boolean {
-        return url.isNotEmpty() && videoVideoRender != null
+        if (mSurfaceView == null && mSurface == null) {
+            Log.w(TAG, "SurfaceView和Surface都为空，至少需要一个不为空")
+            stateListener?.decoderError(this, "显示器为空")
+            return false
+        }
+        return true
     }
 
     override fun initExtractor(path: String): IExtractor {
         return VideoExtractor(path)
     }
 
-    override fun configCodec(baseDecoder: BaseDecoder, codec: MediaCodec, format: MediaFormat): Boolean {
-        return videoVideoRender?.initRender(baseDecoder, codec, format) ?: false
+    override fun initSpecParams(format: MediaFormat) {
     }
 
-    override fun decodeOneFrame(frame: Frame) {
+    override fun configCodec(codec: MediaCodec, format: MediaFormat): Boolean {
+        when {
+            mSurface != null -> {
+                codec.configure(format, mSurface , null, 0)
+            }
+            mSurfaceView?.holder?.surface != null -> {
+                mSurface = mSurfaceView.holder.surface
+                codec.configure(format, mSurface , null, 0)
+            }
+            else -> {
+                mSurfaceView?.holder?.addCallback(object : SurfaceHolder.Callback2 {
+                    override fun surfaceRedrawNeeded(holder: SurfaceHolder) {
+                    }
 
+                    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+                    }
+
+                    override fun surfaceDestroyed(holder: SurfaceHolder) {
+                    }
+
+                    override fun surfaceCreated(holder: SurfaceHolder) {
+                        mSurface = holder.surface
+                        codec.configure(format, mSurface , null, 0)
+                        notifyDecode()
+                    }
+                })
+
+                return false
+            }
+        }
+        return true
     }
 
-    override fun release() {
-        videoVideoRender?.release()
+    override fun initRender(): Boolean {
+        return true
     }
 
+    override fun render(outputBuffer: ByteBuffer,
+                        bufferInfo: MediaCodec.BufferInfo) {
+    }
 
+    override fun doneDecode() {
+    }
 }

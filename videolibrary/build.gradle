@@ -15,14 +15,14 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
 
-        externalNativeBuild {
-            cmake {
-                cppFlags "-std=c++11 -frtti -fexceptions"
-            }
-        }
-        ndk {
-            abiFilters  "armeabi-v7a"
-        }
+//        externalNativeBuild {
+//            cmake {
+//                cppFlags "-std=c++11 -frtti -fexceptions"
+//            }
+//        }
+//        ndk {
+//            abiFilters  "armeabi-v7a"
+//        }
     }
 
     buildTypes {
@@ -31,12 +31,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
-    externalNativeBuild {
-        cmake {
-            path file('src/main/cpp/CMakeLists.txt')
-            version '3.10.2'
-        }
-    }
+//    externalNativeBuild {
+//        cmake {
+//            path file('src/main/cpp/CMakeLists.txt')
+//            version '3.10.2'
+//        }
+//    }
 //    sourceSets {
 //        main {
 //            jniLibs.srcDirs = ['libs']

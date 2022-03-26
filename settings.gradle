@@ -8,5 +8,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "AndroidFFmpegDemo"
 include ':app'
-include ':videolibrary'
+//include ':videolibrary'
 include ':nativelib'

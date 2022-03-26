@@ -5,39 +5,31 @@ import android.media.MediaFormat
 import android.util.Log
 import com.matt.nativelib.media.Frame
 import com.matt.nativelib.media.muxer.MMuxer
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.nio.ByteBuffer
 
 
 /**
- * 编码器基类
+ * 基础编码器
  *
  * @author Liao Jianpeng
  * @Date 2022/2/21
  * @email 329524627@qq.com
  * @Description :
  */
-abstract class BaseEncoder(
-    protected val muxer: MMuxer,
-    protected val videoWidth: Int = -1,
-    protected val videoHeight: Int = -1
-) {
+abstract class BaseEncoder(muxer: MMuxer, width: Int = -1, height: Int = -1) : Runnable {
 
     private val TAG = "BaseEncoder"
 
-    enum class EncoderState {
-        /**开始状态*/
-        START,
+    // 目标视频宽，只有视频编码的时候才有效
+    protected val mWidth: Int = width
 
-        /**编码中*/
-        CODING,
+    // 目标视频高，只有视频编码的时候才有效
+    protected val mHeight: Int = height
 
-        /**编码器释放*/
-        STOP
-    }
+    // Mp4合成器
+    private var mMuxer: MMuxer = muxer
 
+    // 线程运行
     private var mRunning = true
 
     // 编码帧序列
@@ -61,11 +53,7 @@ abstract class BaseEncoder(
     private var mIsEOS = false
 
     // 编码状态监听器
-    var mStateListener: IEncodeStateListener? = null
-
-    private var mState = EncoderState.STOP
-
-    private val iOScope by lazy { CoroutineScope(Dispatchers.IO) }
+    private var mStateListener: IEncodeStateListener? = null
 
     init {
         initCodec()
@@ -81,26 +69,17 @@ abstract class BaseEncoder(
         mOutputBuffers = mCodec.outputBuffers
         mInputBuffers = mCodec.inputBuffers
         Log.i(TAG, "编码器初始化完成")
-        mState = EncoderState.START
-        mStateListener?.encodeReady(this)
     }
 
-
-    fun start() {
-        if (mState == EncoderState.START) {
-            iOScope.launch {
-                loopEncode()
-                done()
-            }
-        }
+    override fun run() {
+        loopEncode()
+        done()
     }
 
     /**
      * 循环编码
      */
     private fun loopEncode() {
-        mState = EncoderState.CODING
-        mStateListener?.encodeRunning(this)
         Log.i(TAG, "开始编码")
         while (mRunning && !mIsEOS) {
             val empty = synchronized(mFrames) {
@@ -142,17 +121,13 @@ abstract class BaseEncoder(
                 inputBuffer.put(frame.buffer)
             }
             if (frame.buffer == null || frame.bufferInfo.size <= 0) { // 小于等于0时，为音频结束符标记
-                mCodec.queueInputBuffer(
-                    index, 0, 0,
-                    frame.bufferInfo.presentationTimeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM
-                )
+                mCodec.queueInputBuffer(index, 0, 0,
+                    frame.bufferInfo.presentationTimeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM)
             } else {
                 frame.buffer?.flip()
                 frame.buffer?.mark()
-                mCodec.queueInputBuffer(
-                    index, 0, frame.bufferInfo.size,
-                    frame.bufferInfo.presentationTimeUs, 0
-                )
+                mCodec.queueInputBuffer(index, 0, frame.bufferInfo.size,
+                    frame.bufferInfo.presentationTimeUs, 0)
             }
             frame.buffer?.clear()
         }
@@ -167,7 +142,7 @@ abstract class BaseEncoder(
             when (index) {
                 MediaCodec.INFO_TRY_AGAIN_LATER -> break@loop
                 MediaCodec.INFO_OUTPUT_FORMAT_CHANGED -> {
-                    addTrack(muxer, mCodec.outputFormat)
+                    addTrack(mMuxer, mCodec.outputFormat)
                 }
                 MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED -> {
                     mOutputBuffers = mCodec.outputBuffers
@@ -186,7 +161,7 @@ abstract class BaseEncoder(
                     }
 
                     if (!mIsEOS) {
-                        writeData(muxer, mOutputBuffers!![index], mBufferInfo)
+                        writeData(mMuxer, mOutputBuffers!![index], mBufferInfo)
                     }
                     mCodec.releaseOutputBuffer(index, false)
                 }
@@ -200,7 +175,7 @@ abstract class BaseEncoder(
     private fun done() {
         try {
             Log.i(TAG, "release")
-            release(muxer)
+            release(mMuxer)
             mCodec.stop()
             mCodec.release()
             mRunning = false
@@ -231,7 +206,7 @@ abstract class BaseEncoder(
             synchronized(mLock) {
                 mLock.notify()
             }
-        } catch (e: Exception) {
+        } catch (e : Exception) {
             e.printStackTrace()
         }
     }
@@ -260,6 +235,12 @@ abstract class BaseEncoder(
         }
     }
 
+    /**
+     * 设置状态监听器
+     */
+    fun setStateListener(l: IEncodeStateListener) {
+        this.mStateListener = l
+    }
 
     /**
      * 编码类型

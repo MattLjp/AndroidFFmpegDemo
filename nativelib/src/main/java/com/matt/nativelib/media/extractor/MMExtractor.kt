@@ -4,6 +4,7 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import java.nio.ByteBuffer
 
+
 /**
  * 音视频分离器
  *
@@ -12,6 +13,7 @@ import java.nio.ByteBuffer
  * @email 329524627@qq.com
  * @Description :
  */
+
 class MMExtractor(path: String) {
 
     /**音视频分离器*/
@@ -42,7 +44,7 @@ class MMExtractor(path: String) {
         for (i in 0 until mExtractor!!.trackCount) {
             val mediaFormat = mExtractor!!.getTrackFormat(i)
             val mime = mediaFormat.getString(MediaFormat.KEY_MIME)
-            if (mime?.startsWith("video/") == true) {
+            if (mime!!.startsWith("video/")) {
                 mVideoTrack = i
                 break
             }
@@ -59,7 +61,7 @@ class MMExtractor(path: String) {
         for (i in 0 until mExtractor!!.trackCount) {
             val mediaFormat = mExtractor!!.getTrackFormat(i)
             val mime = mediaFormat.getString(MediaFormat.KEY_MIME)
-            if (mime?.startsWith("audio/") == true) {
+            if (mime!!.startsWith("audio/")) {
                 mAudioTrack = i
                 break
             }
@@ -101,8 +103,8 @@ class MMExtractor(path: String) {
     /**
      * Seek到指定位置，并返回实际帧的时间戳
      */
-    fun seek(pos: Long): Long {
-        mExtractor!!.seekTo(pos, MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
+    fun seek(timeUs: Long): Long {
+        mExtractor!!.seekTo(timeUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC)
         return mExtractor!!.sampleTime
     }
 

@@ -3,8 +3,9 @@ package com.matt.nativelib.media.extractor
 import android.media.MediaFormat
 import java.nio.ByteBuffer
 
+
 /**
- * 音视频分离器接口
+ * 音视频分离器定义
  *
  * @author Liao Jianpeng
  * @Date 2022/2/21
@@ -30,7 +31,7 @@ interface IExtractor {
     /**
      * Seek到指定位置，并返回实际帧的时间戳
      */
-    fun seek(pos: Long): Long
+    fun seek(timeUs: Long): Long
 
     /**
      * 停止读取数据

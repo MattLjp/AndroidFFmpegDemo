@@ -15,11 +15,6 @@
 #ifndef LEARNFFMPEG_MEDIARECORDER_H
 #define LEARNFFMPEG_MEDIARECORDER_H
 
-#include <ImageDef.h>
-#include <render/audio/AudioRender.h>
-#include "ThreadSafeQueue.h"
-#include "thread"
-
 extern "C" {
 #include <libavutil/avassert.h>
 #include <libavutil/channel_layout.h>
@@ -32,6 +27,11 @@ extern "C" {
 #include <libswresample/swresample.h>
 #include <libavcodec/avcodec.h>
 }
+
+#include <ImageDef.h>
+#include <render/audio/AudioRender.h>
+#include "ThreadSafeQueue.h"
+#include "thread"
 
 using namespace std;
 

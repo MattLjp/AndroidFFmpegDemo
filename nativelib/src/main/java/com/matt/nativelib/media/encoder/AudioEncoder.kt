@@ -10,7 +10,7 @@ import java.nio.ByteBuffer
 
 
 /**
- * 音频编码器
+ * 视频编码器
  *
  * @author Liao Jianpeng
  * @Date 2022/2/21
@@ -22,7 +22,7 @@ class AudioEncoder(muxer: MMuxer) : BaseEncoder(muxer) {
     private val TAG = "AudioEncoder"
 
     // 编码采样率率
-    private val DEST_SAMPLE_RATE = 44100
+    val DEST_SAMPLE_RATE = 44100
 
     // 编码码率
     private val DEST_BIT_RATE = 128000

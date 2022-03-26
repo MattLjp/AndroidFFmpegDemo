@@ -32,8 +32,8 @@ class VideoExtractor(path: String) : IExtractor {
         return mMediaExtractor.getSampleFlag()
     }
 
-    override fun seek(pos: Long): Long {
-        return mMediaExtractor.seek(pos)
+    override fun seek(timeUs: Long): Long {
+        return mMediaExtractor.seek(timeUs)
     }
 
 

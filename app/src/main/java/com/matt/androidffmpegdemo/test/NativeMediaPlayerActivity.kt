@@ -3,7 +3,6 @@ package com.matt.androidffmpegdemo.test
 import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.Environment
 import android.widget.SeekBar
 import android.widget.SeekBar.OnSeekBarChangeListener
 import android.widget.Toast
@@ -16,8 +15,8 @@ class NativeMediaPlayerActivity : AppCompatActivity() {
     private lateinit var binding: ActivityNativeMediaPlayerBinding
 
     private var mIsTouch = false
-    private val mVideoPath =
-        Environment.getExternalStorageDirectory().absolutePath + "/byteflow/one_piece.mp4"
+    private val mVideoPath
+        get() = externalCacheDir.toString() + "/byteflow/midway.mp4"
 
 
     private lateinit var player: Player
@@ -44,7 +43,7 @@ class NativeMediaPlayerActivity : AppCompatActivity() {
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
-
+                player.seekTo(seekBar.progress)
 //                if (mMediaPlayer != null) {
 //                    mMediaPlayer.seekToPosition(mSeekBar.progress)
 //                    mIsTouch = false
@@ -52,8 +51,8 @@ class NativeMediaPlayerActivity : AppCompatActivity() {
             }
         })
 
-
-        player.create(Player.DecoderType.NativeDecoder, mVideoPath, binding.surfaceView)
+        player = Player()
+        player.init(Player.DecoderType.NativeDecoder, mVideoPath, binding.surfaceView)
 
     }
 
@@ -88,7 +87,7 @@ class NativeMediaPlayerActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        player.release()
+        player.stop()
     }
 
     protected fun hasPermissionsGranted(permissions: Array<String?>): Boolean {

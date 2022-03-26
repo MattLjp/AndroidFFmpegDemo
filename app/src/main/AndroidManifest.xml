@@ -23,6 +23,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".test.NativeMediaPlayerActivity"/>
 <!--        <activity android:name=".test.SimpleRenderActivity"/>-->
 <!--        <activity android:name=".test.SimplePlayerActivity"/>-->
 <!--        <activity android:name=".test.OpenGLPlayerActivity"/>-->
