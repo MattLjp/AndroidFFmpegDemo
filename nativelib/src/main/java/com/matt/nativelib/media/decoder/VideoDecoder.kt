@@ -45,10 +45,11 @@ class VideoDecoder(path: String, sfv: SurfaceView?, surface: Surface?): BaseDeco
         when {
             mSurface != null -> {
                 codec.configure(format, mSurface , null, 0)
+                notifyDecode()
             }
             mSurfaceView?.holder?.surface != null -> {
-                mSurface = mSurfaceView.holder.surface
-                codec.configure(format, mSurface , null, 0)
+                mSurface = mSurfaceView.holder?.surface
+                configCodec(codec, format)
             }
             else -> {
                 mSurfaceView?.holder?.addCallback(object : SurfaceHolder.Callback2 {
@@ -63,8 +64,7 @@ class VideoDecoder(path: String, sfv: SurfaceView?, surface: Surface?): BaseDeco
 
                     override fun surfaceCreated(holder: SurfaceHolder) {
                         mSurface = holder.surface
-                        codec.configure(format, mSurface , null, 0)
-                        notifyDecode()
+                        configCodec(codec, format)
                     }
                 })
 

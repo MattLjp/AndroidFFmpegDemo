@@ -2,9 +2,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.matt.androidffmpegdemo">
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-
+    <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:name=".test.MainApp"
         android:allowBackup="true"
@@ -15,7 +17,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
-            android:name=".test.MainActivity"
+            android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -23,8 +25,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".test.NativeMediaPlayerActivity"/>
-<!--        <activity android:name=".test.SimpleRenderActivity"/>-->
+        <activity android:name=".NativeMediaPlayerActivity"/>
+        <activity android:name=".FFmpegPlayerActivity"/>
+        <activity android:name=".GLMediaPlayerActivity"/>
+        <activity android:name=".AudioVisualMediaPlayerActivity"/>
+        <activity android:name=".VRMediaPlayerActivity"/>
+        <activity android:name=".VideoRecorderActivity"/>
+        <activity android:name=".AudioRecorderActivity"/>
+        <activity android:name=".AVRecorderActivity"/>
+        <activity android:name=".StreamMediaPlayerActivity"/>
+        <activity android:name=".FFMediaCodecPlayerActivity"/>
 <!--        <activity android:name=".test.SimplePlayerActivity"/>-->
 <!--        <activity android:name=".test.OpenGLPlayerActivity"/>-->
 <!--        <activity android:name=".test.MultiOpenGLPlayerActivity"/>-->

@@ -52,6 +52,5 @@ dependencies {
 
     implementation 'com.yanzhenjie:permission:2.0.0-rc12'
 
-//    implementation project(path: ':videolibrary')
     implementation project(path: ':nativelib')
 }

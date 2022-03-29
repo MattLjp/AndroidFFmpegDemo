@@ -47,9 +47,6 @@ class FFMediaPlayer {
         }
     }
 
-    fun GetFFmpegVersion(): String? {
-        return native_GetFFmpegVersion()
-    }
 
     fun init(url: String, videoRenderType: Int, surface: Surface) {
         mNativePlayerHandle = native_Init(url, FFMEDIA_PLAYER, videoRenderType, surface)
@@ -120,48 +117,55 @@ class FFMediaPlayer {
 
     private external fun native_SetMediaParams(playerHandle: Long, paramType: Int, param: Any)
 
-    interface EventCallback {
-        fun onPlayerEvent(msgType: Int, msgValue: Float)
-    }
-
     companion object {
         init {
             System.loadLibrary("ffmpeglib")
         }
 
         //gl render type
-        val VIDEO_GL_RENDER = 0
-        val AUDIO_GL_RENDER = 1
-        val VR_3D_GL_RENDER = 2
+        const val VIDEO_GL_RENDER = 0
+        const val AUDIO_GL_RENDER = 1
+        const val VR_3D_GL_RENDER = 2
 
         //player type
-        val FFMEDIA_PLAYER = 0
-        val HWCODEC_PLAYER = 1
+        const val FFMEDIA_PLAYER = 0
+        const val HWCODEC_PLAYER = 1
 
-        val MSG_DECODER_INIT_ERROR = 0
-        val MSG_DECODER_READY = 1
-        val MSG_DECODER_DONE = 2
-        val MSG_REQUEST_RENDER = 3
-        val MSG_DECODING_TIME = 4
+        const val MSG_DECODER_INIT_ERROR = 0
+        const val MSG_DECODER_READY = 1
+        const val MSG_DECODER_DONE = 2
+        const val MSG_REQUEST_RENDER = 3
+        const val MSG_DECODING_TIME = 4
 
-        val MEDIA_PARAM_VIDEO_WIDTH = 0x0001
-        val MEDIA_PARAM_VIDEO_HEIGHT = 0x0002
-        val MEDIA_PARAM_VIDEO_DURATION = 0x0003
+        const val MEDIA_PARAM_VIDEO_WIDTH = 0x0001
+        const val MEDIA_PARAM_VIDEO_HEIGHT = 0x0002
+        const val MEDIA_PARAM_VIDEO_DURATION = 0x0003
 
-        val MEDIA_PARAM_ASSET_MANAGER = 0x0020
+        const val MEDIA_PARAM_ASSET_MANAGER = 0x0020
 
-        val VIDEO_RENDER_OPENGL = 0
-        val VIDEO_RENDER_ANWINDOW = 1
-        val VIDEO_RENDER_3D_VR = 2
+        const val VIDEO_RENDER_OPENGL = 0
+        const val VIDEO_RENDER_ANWINDOW = 1
+        const val VIDEO_RENDER_3D_VR = 2
 
+        fun getFFmpegVersion(): String? {
+            return native_GetFFmpegVersion()
+        }
+
+        @JvmStatic
         private external fun native_GetFFmpegVersion(): String?
 
         //for GL render
+        @JvmStatic
         external fun native_OnSurfaceCreated(renderType: Int)
+
+        @JvmStatic
         external fun native_OnSurfaceChanged(renderType: Int, width: Int, height: Int)
+
+        @JvmStatic
         external fun native_OnDrawFrame(renderType: Int)
 
         //update MVP matrix
+        @JvmStatic
         external fun native_SetGesture(
             renderType: Int,
             xRotateAngle: Float,
@@ -169,6 +173,11 @@ class FFMediaPlayer {
             scale: Float
         )
 
+        @JvmStatic
         external fun native_SetTouchLoc(renderType: Int, touchX: Float, touchY: Float)
+    }
+
+    interface EventCallback {
+        fun onPlayerEvent(msgType: Int, msgValue: Float)
     }
 }

@@ -28,6 +28,11 @@ abstract class BaseDecoder(private val filePath: String) : Runnable {
      */
     private val mLock = Object()
 
+    /**
+     * 是否可以进入解码
+     */
+    private var mReadyForDecode = false
+
     //---------------状态相关-----------------------
     /**
      * 音视频解码器
